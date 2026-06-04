@@ -1,0 +1,21 @@
+<launch>
+	<!-- Take the compressed robot's stream and republish it as a normal image -->
+	<node pkg="image_transport" exec="republish" name="decompressor" output="screen">
+		<param name="in_transport" value="compressed" />
+		<param name="out_transport" value="raw" />
+		<remap from="in/compressed" to="/turtlecam/image_raw/compressed" />
+		<remap from="out" to="/turtlecam/image_raw" />
+	</node>
+
+	<!-- Undistort the uncompressed image -->
+	<node pkg="image_proc" exec="rectify_node" name="rectifier" output="screen"
+		namespace="turtlecam">
+		<param name="image_transport" value="compressed" />
+		<remap from="image" to="image_raw" />
+	</node>
+
+	<!-- Display -->
+	<node pkg="rqt_image_view" exec="rqt_image_view" name="rqt_image_view" output="screen" />
+
+	<!-- TODO: Add your nodes here -->
+</launch>
