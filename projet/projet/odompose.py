@@ -7,7 +7,11 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Imu, MagneticField
-from turtlebot3_msgs.msg import SensorState
+try:
+    from turtlebot3_msgs.msg import SensorState
+    TURTLEBOT3_MSGS_AVAILABLE = True
+except ImportError:
+    TURTLEBOT3_MSGS_AVAILABLE = False
 from transforms3d.euler import euler2quat
 
 
@@ -36,9 +40,12 @@ class OdomPose(Node):
 
         # Subscribers
         self.sub_gyro = self.create_subscription(Imu, "/imu", self.callback_gyro, 10)
-        self.sub_enco = self.create_subscription(
-            SensorState, "/sensor_state", self.callback_enco, 10
-        )
+        if TURTLEBOT3_MSGS_AVAILABLE:
+            self.sub_enco = self.create_subscription(
+                SensorState, "/sensor_state", self.callback_enco, 10
+            )
+        else:
+            self.get_logger().warn("turtlebot3_msgs non disponible — callback encodeurs désactivé")
         self.sub_magn = self.create_subscription(
             MagneticField, "/magnetic_field", self.callback_magn, 10
         )

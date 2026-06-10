@@ -4,6 +4,7 @@ import numpy as np
 import rclpy
 from geometry_msgs.msg import PointStamped
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import LaserScan, PointCloud2
 
 from .utils import make_pointcloud2, declare_param
@@ -14,7 +15,10 @@ class Transformer(Node):
         super().__init__("transformer")
         self.pub = self.create_publisher(PointCloud2, "points", 10)
         self.pub_pos = self.create_publisher(PointStamped, "robot_position", 10)
-        self.sub = self.create_subscription(LaserScan, "scan", self.callback, 10)
+        # Le bag publie /scan en BEST_EFFORT : le subscriber doit avoir le même QoS,
+        # sinon (RELIABLE par défaut) la souscription est incompatible et ne reçoit rien.
+        qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
+        self.sub = self.create_subscription(LaserScan, "scan", self.callback, qos)
 
         # Positions (x, y) des 3 amers réfléchissants dans le référentiel fixe du labyrinthe.
         # La méthode de triangulation utilise les distances mesurées vers ces 3 points connus

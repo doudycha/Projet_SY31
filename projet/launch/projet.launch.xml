@@ -19,4 +19,11 @@
   <node pkg="projet" exec="pipeline_node" name="pipeline" output="screen">
     <param name="position_threshold" value="0.5"/>
   </node>
+
+  <!-- Visualisation caméra : affiche le flux /detections (flèches détectées) -->
+  <node pkg="rqt_image_view" exec="rqt_image_view" name="rqt_image_view" output="screen"
+        args="/detections"/>
+
+  <!-- Visualisation 3D : points LiDAR filtrés, pose odométrie, carte globale -->
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"/>
 </launch>

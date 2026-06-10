@@ -1,0 +1,34 @@
+<launch>
+  <!-- ============================================================== -->
+  <!-- SY31 Projet 2 - Cartographie guidee dans un labyrinthe         -->
+  <!-- ============================================================== -->
+
+  <!-- Odometrie : encodeurs (/sensor_state) + gyrometre (/imu)        -->
+  <!-- Publie /odom_est, /trajectory et la TF odom -> base_link        -->
+  <node pkg="projet2" exec="odometry" name="odometry" output="screen"/>
+
+  <!-- Cartographie : accumulation des points LiDAR dans le repere     -->
+  <!-- fixe via la matrice homogene + clustering. Publie /map_points    -->
+  <node pkg="projet2" exec="mapper" name="mapper" output="screen">
+    <param name="min_range" value="0.08"/>
+    <param name="max_range" value="3.5"/>
+    <param name="voxel_size" value="0.02"/>
+  </node>
+
+  <!-- Detection des fleches colorees + clustering (un point/cluster)  -->
+  <!-- Publie /detections (image), /direction_cmd (left/right/none)     -->
+  <node pkg="projet2" exec="arrow_detector" name="arrow_detector" output="screen">
+    <param name="min_area" value="600.0"/>
+  </node>
+
+  <!-- Affichage de la consigne de direction pour l'operateur          -->
+  <!-- Publie /direction_display (image), visible dans rqt_image_view   -->
+  <node pkg="projet2" exec="direction_display" name="direction_display" output="screen"/>
+
+  <!-- Visualisation 3D : carte, trajectoire, scan filtre, fleches      -->
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"/>
+
+  <!-- Visualisation camera : flux annote /detections                  -->
+  <node pkg="rqt_image_view" exec="rqt_image_view" name="rqt_image_view"
+        output="screen" args="/detections"/>
+</launch>

@@ -5,7 +5,11 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, Imu, PointCloud2
 from sensor_msgs_py.point_cloud2 import read_points_numpy
-from turtlebot3_msgs.msg import SensorState
+try:
+    from turtlebot3_msgs.msg import SensorState
+    TURTLEBOT3_MSGS_AVAILABLE = True
+except ImportError:
+    TURTLEBOT3_MSGS_AVAILABLE = False
 
 from .utils import make_pointcloud2
 
@@ -58,9 +62,12 @@ class Pipeline(Node):
         self.pub_map = self.create_publisher(PointCloud2, "map_points", 10)
 
         # Subscribers — 3 capteurs
-        self.sub_enco = self.create_subscription(
-            SensorState, "/sensor_state", self.callback_enco, 10
-        )
+        if TURTLEBOT3_MSGS_AVAILABLE:
+            self.sub_enco = self.create_subscription(
+                SensorState, "/sensor_state", self.callback_enco, 10
+            )
+        else:
+            self.get_logger().warn("turtlebot3_msgs non disponible — position encodeurs désactivée, (x,y) fixé à (0,0)")
         self.sub_gyro = self.create_subscription(
             Imu, "/imu", self.callback_gyro, 10
         )
@@ -85,7 +92,7 @@ class Pipeline(Node):
     # Callbacks odométrie                                                  #
     # ------------------------------------------------------------------ #
 
-    def callback_enco(self, sensor_state: SensorState):
+    def callback_enco(self, sensor_state):
         """Calcule (x, y) du robot depuis les encodeurs.
 
         Méthode identique à callback_enco dans odompose.py.
@@ -159,7 +166,7 @@ class Pipeline(Node):
             [ y_g ] = T · [ y_r ]
             [  1  ]   [  1  ]
         """
-        if not self.enco_ready or not self.gyro_ready:
+        if not self.gyro_ready:
             return
 
         theta  = self.O_gyro

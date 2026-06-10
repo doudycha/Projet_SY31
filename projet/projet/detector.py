@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import CompressedImage, Image
 
 
@@ -13,7 +14,8 @@ class Detector(Node):
 
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Image, "detections", 10)
-        self.sub = self.create_subscription(CompressedImage, "turtlecam/image_raw/compressed", self.callback, 10)
+        qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
+        self.sub = self.create_subscription(CompressedImage, "turtlecam/image_raw/compressed", self.callback, qos)
 
     def callback(self, msg: CompressedImage):
         """Process the images going on image_raw/compressed"""

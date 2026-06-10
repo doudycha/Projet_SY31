@@ -7,27 +7,39 @@
 
 ---
 
-## Étape 1 — Builder le package (une seule fois, ou après modif du code)
+## Étape 0 — Installer les dépendances (une seule fois)
 
-Depuis **PowerShell** :
-
-```powershell
-wsl bash -c "source /opt/ros/jazzy/setup.bash && cd '/mnt/c/Users/Maxime/OneDrive/Bureau/Travail/UTC/P26/SY31/Projet/sy31_ws' && colcon build --packages-select projet"
+```bash
+sudo apt-get install -y ros-jazzy-turtlebot3-msgs
+sudo apt-get install -y python3-transforms3d
 ```
 
-Depuis un **terminal Ubuntu WSL** :
+- `ros-jazzy-turtlebot3-msgs` : messages encodeurs (`/sensor_state`) pour `odompose` et `pipeline`
+- `python3-transforms3d` : conversion euler → quaternion dans `odompose`
+
+---
+
+## Étape 1 — Builder le package
+
+**Important :** toujours utiliser `--symlink-install` pour que les scripts atterrissent dans `lib/projet/` (requis par `ros2 run` et `ros2 launch`).
+
+**PowerShell :**
+
+```powershell
+wsl bash -c "source /opt/ros/jazzy/setup.bash && cd '/mnt/c/Users/Maxime/OneDrive/Bureau/Travail/UTC/P26/SY31/Projet/sy31_ws' && colcon build --packages-select projet --symlink-install"
+```
+
+**Ubuntu WSL :**
 
 ```bash
 source /opt/ros/jazzy/setup.bash
 cd /mnt/c/Users/Maxime/OneDrive/Bureau/Travail/UTC/P26/SY31/Projet/sy31_ws
-colcon build --packages-select projet
+colcon build --packages-select projet --symlink-install
 ```
 
 ---
 
 ## Étape 2 — Lancer les nœuds du projet
-
-Ouvre un terminal (PowerShell ou Ubuntu WSL) et lance le fichier de lancement :
 
 **PowerShell :**
 
@@ -43,10 +55,12 @@ source /mnt/c/Users/Maxime/OneDrive/Bureau/Travail/UTC/P26/SY31/Projet/sy31_ws/i
 ros2 launch projet projet.launch.xml
 ```
 
-Cela démarre simultanément :
+Démarre les 5 nœuds simultanément :
 - `detector` — détecte les formes rouges et bleues depuis la caméra
-- `transformer` — convertit le LiDAR en nuage de points cartésien
+- `transformer` — convertit le LiDAR polaire en nuage de points cartésien
 - `intensity_filter` — filtre les points selon leur réflectivité
+- `odompose` — estime la pose robot (encodeurs / gyro / magnéto)
+- `pipeline` — fusionne LiDAR + odométrie → carte globale `/map_points`
 
 ---
 
@@ -65,13 +79,13 @@ source /opt/ros/jazzy/setup.bash
 ros2 bag play /mnt/c/Users/Maxime/OneDrive/Bureau/Travail/UTC/P26/SY31/Projet/labyrinthe/ --loop
 ```
 
-`--loop` repart automatiquement au début quand le bag se termine (durée ~115 s).
+`--loop` repart automatiquement au début (durée ~115 s).
 
 ---
 
-## Étape 4 — Visualiser les détections (terminal Ubuntu WSL uniquement)
+## Étape 4 — Visualiser (terminal Ubuntu WSL uniquement)
 
-Les fenêtres graphiques nécessitent un terminal Ubuntu interactif (pas PowerShell).
+Les fenêtres graphiques nécessitent un terminal interactif, pas PowerShell.
 
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -79,25 +93,14 @@ source /mnt/c/Users/Maxime/OneDrive/Bureau/Travail/UTC/P26/SY31/Projet/sy31_ws/i
 ros2 run rqt_image_view rqt_image_view
 ```
 
-Dans la fenêtre qui s'ouvre, sélectionne le topic **`/detections`** dans le menu déroulant.
-Tu verras le flux vidéo avec :
-- Les contours **verts** autour des formes rouges détectées
-- Les contours **jaunes** autour des formes bleues détectées
+Dans le menu déroulant : sélectionner `/detections` (contours rouges en vert, bleus en jaune).
 
 ---
 
 ## Réglage du seuil d'intensité LiDAR
 
-Le filtre d'intensité supprime les points LiDAR peu réflectifs. La valeur par défaut est `10000.0`.
-Tu peux la modifier à chaud sans relancer les nœuds :
-
 ```bash
 ros2 param set /intensity_filter intensity_threshold 8000.0
-```
-
-Pour voir la valeur actuelle :
-
-```bash
 ros2 param get /intensity_filter intensity_threshold
 ```
 
@@ -106,14 +109,10 @@ ros2 param get /intensity_filter intensity_threshold
 ## Vérifier que tout tourne
 
 ```bash
-# Lister les nœuds actifs
-ros2 node list
-
-# Vérifier la fréquence de publication des détections (~12 Hz attendu)
-ros2 topic hz /detections
-
-# Vérifier les points LiDAR filtrés
-ros2 topic hz /points_filtered
+ros2 node list                       # 5 nœuds attendus
+ros2 topic hz /detections            # ~12 Hz (caméra)
+ros2 topic hz /points_filtered       # ~5 Hz (LiDAR)
+ros2 topic hz /map_points            # actif si turtlebot3_msgs installé
 ```
 
 ---
@@ -126,4 +125,8 @@ ros2 topic hz /points_filtered
 | `/detections` | Image | `detector` | rqt_image_view |
 | `/scan` | LaserScan | bag | `transformer` |
 | `/points` | PointCloud2 | `transformer` | `intensity_filter` |
-| `/points_filtered` | PointCloud2 | `intensity_filter` | — |
+| `/points_filtered` | PointCloud2 | `intensity_filter` | `pipeline` |
+| `/imu` | Imu | bag | `odompose`, `pipeline` |
+| `/sensor_state` | SensorState | bag | `odompose`, `pipeline` |
+| `/pose_gyro` | PoseStamped | `odompose` | — |
+| `/map_points` | PointCloud2 | `pipeline` | rviz2 |

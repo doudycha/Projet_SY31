@@ -12,7 +12,7 @@ class IntensityFilter(Node):
     def __init__(self):
         super().__init__("intensity_filter")
 
-        declare_param(self, "intensity_threshold", 10000.0)
+        declare_param(self, "intensity_threshold", 10.0)
 
         self.pub = self.create_publisher(PointCloud2, "points_filtered", 10)
         self.sub = self.create_subscription(PointCloud2, "points", self.callback, 10)

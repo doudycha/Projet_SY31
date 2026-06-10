@@ -5,7 +5,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan, PointCloud2
 
-from utils import make_pointcloud2
+from .utils import make_pointcloud2
 
 
 class Transformer(Node):
@@ -38,3 +38,4 @@ def main(args=None):
         rclpy.spin(Transformer())
     except KeyboardInterrupt:
         pass
+

@@ -151,6 +151,27 @@ Calcul systématique : moments `M`, aire, périmètre, approximation polygonale 
 
 ---
 
+## Correctif `transformer.py` — QoS BEST_EFFORT sur `/scan` (2026-06-06)
+
+**Changement :** la souscription à `/scan` utilisait le QoS par défaut (`10` =
+RELIABLE). Le bag `labyrinthe` publie `/scan` en **BEST_EFFORT** → souscription
+incompatible → **aucun message reçu**.
+
+**Détecté par :** test fonctionnel (voir `src/test.md`). `/points`,
+`/points_filtered` et `/map_points` étaient tous à 0 Hz.
+
+**Correctif appliqué :**
+```python
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
+self.sub = self.create_subscription(LaserScan, "scan", self.callback, qos)
+```
+
+Note : ce correctif était déjà documenté dans ce suivi mais était resté en
+commentaire dans le code. Il est désormais réellement appliqué.
+
+---
+
 ## Modification `transformer.py` — sélection optimale des amers
 
 **Date :** juin 2026  
@@ -287,10 +308,95 @@ Points en coordonnées homogènes `[x_r, y_r, 1]`, transformation vectorisée : 
 
 ---
 
+## Corrections suite aux tests sur le bag labyrinthe (juin 2026)
+
+### `setup.cfg` ajouté
+**Problème :** `colcon build` plaçait les scripts dans `install/projet/bin/` au lieu de `install/projet/lib/projet/`, rendant `ros2 run` et `ros2 launch` incapables de trouver les nœuds.  
+**Cause :** le fichier `setup.cfg` était absent du package `projet` (présent dans tp4/tp5).  
+**Correction :** ajout de `setup.cfg` avec :
+```ini
+[develop]
+script_dir=$base/lib/projet
+[install]
+install_scripts=$base/lib/projet
+```
+**Rebuild requis :** `colcon build --packages-select projet --symlink-install`
+
+---
+
+### `transformer.py` — QoS BEST_EFFORT sur `/scan`
+**Problème :** warning `Incompatible QoS` — le bag publie `/scan` en `BEST_EFFORT`, le subscriber était `RELIABLE` par défaut → aucun message reçu.  
+**Correction :** `QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)` sur le subscriber `/scan`.
+
+---
+
+### `odompose.py` et `pipeline.py` — imports optionnels
+**Problème :** `turtlebot3_msgs` et `transforms3d` non installés → crash immédiat des deux nœuds.  
+**Dépendances à installer dans WSL :**
+```bash
+sudo apt-get install -y ros-jazzy-turtlebot3-msgs
+sudo apt-get install -y python3-transforms3d
+```
+**Correction dans le code :** import conditionnel avec `try/except ImportError` + flag `TURTLEBOT3_MSGS_AVAILABLE`. Si absent, le subscriber `/sensor_state` n'est pas créé et un warning est loggé au démarrage.
+
+### `pipeline.py` — architecture finale
+| Quantité | Source | Callback | Méthode |
+|----------|--------|----------|---------|
+| θ (orientation) | Gyroscope `/imu` | `callback_gyro` | `O_gyro += ω_z · dt` (identique tp3) |
+| (x, y) (position) | Encodeurs `/sensor_state` | `callback_enco` | intégration cinématique différentielle (identique tp3) |
+
+Garde de déclenchement : `gyro_ready` uniquement (sans encodeurs, la position reste à (0,0) mais la rotation gyro s'applique).
+
+Transformation par matrice homogène 3×3 :
+```
+T = [ cos(θ)  -sin(θ)  x ]
+    [ sin(θ)   cos(θ)  y ]
+    [   0        0     1 ]
+```
+
+---
+
 ## À faire
 
-- [ ] Accumulation des points LiDAR dans un référentiel fixe (transformation via `/odom`)
+- [x] Architecture initiale (detector, transformer, intensity_filter, pipeline, odompose)
+- [x] Correction setup.cfg (lib/projet/ manquant)
+- [x] Correction QoS sur /scan
+- [x] Imports turtlebot3_msgs et transforms3d optionnels
+- [x] Ajout rqt_image_view et rviz2 dans projet.launch.xml
+- [ ] Installer `ros-jazzy-turtlebot3-msgs` et `python3-transforms3d` en WSL
+- [ ] Calibration des positions des amers (`landmark_1/2/3`) dans le labyrinthe réel
 - [ ] Clustering des flèches colorées détectées par caméra (centroïde par couleur)
 - [ ] Propagation des points flèches sur la carte accumulée (bonus)
 - [ ] `README.md` avec instructions de lancement (exigé pour la note)
-- [ ] Calibration des positions des amers (`landmark_1/2/3`) dans le labyrinthe réel
+
+---
+
+## Alignement fonctions projet ↔ TPs (2026-06-06)
+
+**Vérification complète** que chaque fichier Python du projet suit à l'identique les fonctions du TP correspondant :
+
+| Fichier projet | TP de référence | Résultat |
+|---|---|---|
+| `transformer.py` | `tp4/transformer.py` | Fonctions communes identiques |
+| `intensity_filter.py` | `tp4/intensity_filter.py` | Identique |
+| `detector.py` | `tp5/detect.py` | Fonctions rouge identiques |
+| `odompose.py` | `tp3/odom2pose.py` | Fonctions identiques |
+
+**Correction apportée** dans `transformer.py` : suppression des deux lignes de code commenté (QoS BEST_EFFORT commenté, lié à une ancienne tentative de fix) et de l'import `QoSProfile`/`ReliabilityPolicy` devenu inutile.
+
+---
+
+## Ajout visualisation automatique dans le launch
+
+**Date :** 2026-06-04
+
+### Changement
+`projet.launch.xml` lance désormais automatiquement :
+- `rqt_image_view` abonné à `/detections` — affiche les flèches colorées détectées par la caméra
+- `rviz2` — visualisation 3D des points LiDAR filtrés, poses odométriques et carte accumulée
+
+### Pourquoi
+Auparavant il fallait lancer manuellement ces deux outils dans des terminaux séparés après avoir démarré le pipeline. Désormais un seul `ros2 launch projet projet.launch.xml` ouvre tout.
+
+### Modèle
+Même pattern que `tp5/launch/camera.launch.xml` qui lance `rqt_image_view` directement.

@@ -23,7 +23,7 @@ class Detector(Node):
 
         #self.sub = self.create_subscription(Image, "turtlecam/image_rect", self.callback, 10)
         #Pour le proet, on utilise l'image non rectifiée
-        self.sub = self.create_subscription(CompressedImage, "turtlecam/image_raw/compressed", self.callback, 10)
+        self.sub = self.create_subscription(CompressedImage, "turtlecam/image_raw", self.callback, 10)
 
     def callback(self, msg: CompressedImage):
         """Process the images going on image_raw/compressed"""
