@@ -1,0 +1,14 @@
+<launch>
+    <node pkg="tp4" exec="transformer" output="screen"/>
+
+    <node pkg="tp4" exec="intensity_filter" output="screen">
+        <param name="intensity_threshold" value="0.0"/>
+    </node>
+
+    <node pkg="tp4" exec="clusterer" output="screen">
+        <param name="k" value="5"/>
+        <param name="D" value="0.1"/>
+    </node>
+
+    <node pkg="tp4" exec="shaper_cylinder" output="screen"/>
+</launch>

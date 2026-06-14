@@ -3,16 +3,17 @@
 import numpy as np
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import LaserScan, PointCloud2
 
-from .utils import make_pointcloud2
-
+from tp4.utils import make_pointcloud2
 
 class Transformer(Node):
     def __init__(self):
         super().__init__("transformer")
         self.pub = self.create_publisher(PointCloud2, "points", 10)
-        self.sub = self.create_subscription(LaserScan, "scan", self.callback, 10)
+        qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
+        self.sub = self.create_subscription(LaserScan, "scan", self.callback, qos)
 
     def callback(self, msg: LaserScan):
         x = []
@@ -38,4 +39,3 @@ def main(args=None):
         rclpy.spin(Transformer())
     except KeyboardInterrupt:
         pass
-

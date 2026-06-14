@@ -22,11 +22,17 @@ class ShaperCylinder(Node):
 
         clusters = []
         # TODO: Group xy by cluster ids
-        # ...
+        for c in np.unique(points[:, 2]):
+            if c == 0:
+                continue  # 0 = points sans cluster, on les ignore
+            clusters.append(points[points[:, 2] == c][:, :2])
 
         cylinders = []
         # TODO: Fit cylinders (x, y, radius) around each cluster
-        # ...
+        for cluster in clusters:
+            center = cluster.mean(axis=0)                         # (cx, cy)
+            radius = np.linalg.norm(cluster - center, axis=1).max()  # point le plus loin
+            cylinders.append((center[0], center[1], radius))
 
         self.pub.publish(make_markers(msg.header, cylinders))
 

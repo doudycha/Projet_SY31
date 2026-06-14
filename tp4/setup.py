@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 
 package_name = 'tp4'
 
@@ -9,6 +10,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
+        ('share/' + package_name + '/launch',glob('launch/*')),
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
@@ -31,6 +33,7 @@ setup(
                 'shaper_polyline = tp4.shaper_polyline:main',
                 'transformer = tp4.transformer:main',
                 'utils = tp4.utils:main',
+                'mapper = tp4.mapper:main',
         ],
     },
 )
