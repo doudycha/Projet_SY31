@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python -c \"import cv2; print\\('cv2:', cv2.__version__\\)\" 2>&1; python -c \"import numpy; print\\('numpy:', numpy.__version__\\)\" 2>&1)",
+      "PowerShell(python -c \"import rclpy; print\\('rclpy OK'\\)\" 2>&1)",
+      "PowerShell(python -c \"import cv_bridge; print\\('cv_bridge OK'\\)\" 2>&1)",
+      "PowerShell(pip install *)",
+      "PowerShell(python --version 2>&1; wsl --list --verbose 2>&1)",
+      "Bash(wsl bash *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Maxime\\\\OneDrive\\\\Bureau\\\\Travail\\\\UTC\\\\P26\\\\SY31\\\\Projet\\\\sy31_ws\\\\src\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(pdftotext -layout \"C:\\\\Users\\\\Maxime\\\\OneDrive\\\\Bureau\\\\Travail\\\\UTC\\\\P26\\\\SY31\\\\Projet\\\\sy31_ws\\\\src\\\\tp4\\\\Sujet\\\\SY31-TP4.pdf\" -)",
+      "Bash(pdftotext -layout \"C:\\\\Users\\\\Maxime\\\\OneDrive\\\\Bureau\\\\Travail\\\\UTC\\\\P26\\\\SY31\\\\Projet\\\\sy31_ws\\\\src\\\\tp5\\\\sujet\\\\SY31-TP5.pdf\" -)",
+      "Bash(pdftotext -layout \"C:\\\\Users\\\\Maxime\\\\OneDrive\\\\Bureau\\\\Travail\\\\UTC\\\\P26\\\\SY31\\\\Projet\\\\sy31_ws\\\\src\\\\projet\\\\SY31-Projet-56517891.pdf\" -)",
+      "Bash(dir /s /B \"C:\\\\Users\\\\Maxime\\\\OneDrive\\\\Bureau\\\\Travail\\\\UTC\\\\P26\\\\SY31\\\\Projet\\\\sy31_ws\\\\src\\\\tp3\")",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Maxime\\\\OneDrive\\\\Bureau\\\\Travail\\\\UTC\\\\P26\\\\SY31\\\\Projet\\\\sy31_ws\\\\src\\\\tp3\" -Recurse | ForEach-Object { $_.FullName })",
+      "PowerShell(winget upgrade *)",
+      "Bash(npm install *)",
+      "Bash(claude *)"
+    ]
+  }
+}

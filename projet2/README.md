@@ -120,7 +120,18 @@ ros2 param set /mapper voxel_size 0.03
 
 # Aire minimale d'une flèche détectée (px²)
 ros2 param set /arrow_detector min_area 800.0
+
+#Distance max intra-cluster
+ros2 param set /mapper cluster_dist 0.04
+
+#Nb de points min pour valider le cluster
+ros2 param set /mapper min_cluster_size 8
+
+#Traite 1 scan sur n
+ros2 param set /mapper process_every_n 3
+
 ```
+
 
 ---
 

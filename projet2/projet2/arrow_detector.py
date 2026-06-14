@@ -43,7 +43,7 @@ class ArrowDetector(Node):
         self.bridge = CvBridge()
 
         # Paramètres réglables à chaud
-        declare_param(self, "min_area", 600.0)        # aire min d'un contour (px²)
+        declare_param(self, "min_area", 2600.0)        # aire min d'un contour (px²)
         declare_param(self, "cluster_dist", 60.0)     # distance max intra-cluster (px)
         declare_param(self, "use_roi", True)          # restreindre à la zone centrale
 
